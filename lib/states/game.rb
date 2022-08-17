@@ -54,6 +54,8 @@ class BridgeSim
             end
           end
         end
+
+        @segments = []
       end
 
       def draw
@@ -61,11 +63,42 @@ class BridgeSim
 
         Gosu.scale(1, 1) do
           Gosu.draw_circle(window.width - 128, 128, 64, 36, 0x77_ffa348, 3000)
+
+          if @drag_start
+            Gosu.draw_arc(@drag_start.x, @drag_start.y, 8, 1.0, 36, 2, Gosu::Color::YELLOW, Float::INFINITY)
+            Gosu.draw_line(@drag_start.x, @drag_start.y, Gosu::Color::YELLOW, window.mouse_x, window.mouse_y, Gosu::Color::YELLOW, Float::INFINITY)
+
+            midpoint = (CyberarmEngine::Vector.new)#(window.mouse_x, window.mouse_y) - @drag_start).normalized
+            midpoint.x = ((@drag_start.x + window.mouse_x) / 2.0)
+            midpoint.y = ((@drag_start.y + window.mouse_y) / 2.0)
+
+            Gosu.draw_arc(midpoint.x, midpoint.y, 8, 1.0, 36, 2, Gosu::Color::CYAN, Float::INFINITY)
+            Gosu.draw_arc(window.mouse_x, window.mouse_y, 8, 1.0, 36, 2, Gosu::Color::YELLOW, Float::INFINITY)
+          end
         end
       end
 
       def update
         super
+      end
+
+      def button_down(id)
+        super
+
+        case id
+        when Gosu::MS_LEFT
+          @drag_start = CyberarmEngine::Vector.new(window.mouse_x, window.mouse_y)
+        end
+      end
+
+      def button_up(id)
+        super
+
+        case id
+        when Gosu::MS_LEFT
+          (CyberarmEngine::Vector.new(window.mouse_x, window.mouse_y) - @drag_start)
+          @drag_start = nil
+        end
       end
     end
   end
