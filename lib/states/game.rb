@@ -58,7 +58,10 @@ class BridgeSim
           end
         end
 
+        @level = @options[:level] || Levels::Zero.new
+
         @segments = []
+        @vehicles = []
         @anchors = [
           CyberarmEngine::Vector.new(100, window.height / 2),
           CyberarmEngine::Vector.new(window.width / 2, window.height / 2),
@@ -88,17 +91,8 @@ class BridgeSim
             Gosu.draw_arc(vector.x, vector.y, 8, 1.0, 36, 2, Gosu::Color::YELLOW, Float::INFINITY)
           end
 
-          @segments.each do |segment|
-            point_a = segment.first
-            point_b = segment.last
-            midpoint = CyberarmEngine::Vector.new((point_a.x + point_b.x) / 2.0, (point_a.y + point_b.y) / 2.0)
-
-            Gosu.draw_arc(point_a.x, point_a.y, 8, 1.0, 36, 2, Gosu::Color::YELLOW, Float::INFINITY)
-            Gosu.draw_arc(point_b.x, point_b.y, 8, 1.0, 36, 2, Gosu::Color::YELLOW, Float::INFINITY)
-            Gosu.draw_line(point_a.x, point_a.y, Gosu::Color::YELLOW, point_b.x, point_b.y, Gosu::Color::YELLOW, Float::INFINITY)
-
-            Gosu.draw_arc(midpoint.x, midpoint.y, 8, 1.0, 36, 2, Gosu::Color::CYAN, Float::INFINITY)
-          end
+          @segments.each(&:draw)
+          @vehicles.each(&:draw)
         end
       end
 
@@ -106,6 +100,7 @@ class BridgeSim
         super
 
         @segment_label.value = "#{@segments.size}/?"
+        @vehicles.each(&:update)
       end
 
       def button_down(id)
@@ -125,7 +120,7 @@ class BridgeSim
         case id
         when Gosu::MS_LEFT
           if @drag_start && (anchor = nearest_anchor)
-            @segments << [@drag_start, anchor] if anchor != @drag_start
+            @segments << Objects::Segment.new(segments: [@drag_start, anchor], auto_manage: false) if anchor != @drag_start
           end
 
           @drag_start = nil
@@ -138,10 +133,7 @@ class BridgeSim
 
       def anchor_in_use(anchor)
         @segments.find do |segment|
-          point_a = segment.first
-          point_b = segment.last
-
-          point_a == anchor || point_b == anchor
+          segment.head == anchor || segment.tail == anchor
         end
       end
     end
